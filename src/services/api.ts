@@ -23,6 +23,20 @@ const api = axios.create({
   },
 });
 
+// Interceptor para agregar token automáticamente
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 api.interceptors.response.use(
   (response) => response,
   (error: any) => {
@@ -38,11 +52,16 @@ api.interceptors.response.use(
     if (error.response?.status === 429) {
       message = 'Demasiadas solicitudes. El servicio está temporalmente limitado. Intenta nuevamente en unos momentos.';
     } else if (error.response?.status === 401) {
-      message = 'Error de autenticación con Power BI. Verifica las credenciales.';
+      // Si es error de autenticación, limpiar token y redirigir
+      localStorage.removeItem('auth_token');
+      delete axios.defaults.headers.common['Authorization'];
+      message = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+      // Opcional: redirigir a login
+      setTimeout(() => window.location.reload(), 2000);
     } else if (error.response?.status === 403) {
-      message = 'No tienes permisos para acceder a este reporte.';
+      message = 'No tienes permisos para acceder a este recurso.';
     } else if (error.response?.status === 404) {
-      message = 'El reporte solicitado no fue encontrado.';
+      message = 'El recurso solicitado no fue encontrado.';
     } else if (error.response?.status >= 500) {
       message = 'Error interno del servidor. Intenta nuevamente más tarde.';
     } else {

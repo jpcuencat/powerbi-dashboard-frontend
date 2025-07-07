@@ -1,6 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import ReportList from './components/ReportList';
 import ReportViewer from './components/ReportViewer';
+import ProtectedRoute from './components/ProtectedRoute';
+import AuthSuccess from './components/AuthSuccess';
+import AdminPanel from './components/AdminPanel';
+import { useAuth } from './contexts/AuthContext';
 
 // Definir tipo localmente
 interface Report {
@@ -14,6 +19,7 @@ interface Report {
 type AppView = 'list' | 'viewer';
 
 function App() {
+  const { user, logout } = useAuth();
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<AppView>('list');
@@ -152,51 +158,124 @@ function App() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <div style={{ padding: '20px', backgroundColor: 'white', marginBottom: '20px' }}>
-        <h1 style={{ color: 'black', fontSize: '24px', margin: 0 }}>Dashboard de Power BI</h1>
-        <p style={{ color: 'gray', margin: '5px 0 0 0' }}>Jefatura de Datos</p>
-      </div>
-      
-      {currentView === 'viewer' && selectedReport ? (
-        <div style={{ padding: '20px' }}>
-          <button 
-            onClick={handleBack}
-            style={{
-              backgroundColor: '#6c757d',
-              color: 'white',
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              marginBottom: '20px'
-            }}
-          >
-            ← Volver a la lista
-          </button>
-          <ReportViewer report={selectedReport} onBack={handleBack} />
-        </div>
-      ) : (
-        <div style={{ padding: '20px' }}>
-          <h2 style={{ color: 'black', marginBottom: '20px' }}>Lista de Reportes</h2>
-          <div style={{
-            backgroundColor: '#e8f4f8',
-            border: '2px solid #007bff',
-            padding: '10px',
-            marginBottom: '20px',
-            borderRadius: '5px'
-          }}>
-            <p style={{ margin: 0, fontSize: '14px', color: '#333' }}>
-              {new Date().toLocaleTimeString()}
-            </p>
+    <Routes>
+      <Route path="/auth-success" element={<AuthSuccess />} />
+      <Route path="/admin" element={
+        <ProtectedRoute requireAdmin={true}>
+          <AdminPanel />
+        </ProtectedRoute>
+      } />
+      <Route path="/*" element={
+        <ProtectedRoute>
+          <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+            {/* Header con información del usuario */}
+            <div style={{ 
+              padding: '15px 20px', 
+              backgroundColor: 'white', 
+              marginBottom: '20px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h1 style={{ color: 'black', fontSize: '24px', margin: 0 }}>Dashboard de Power BI</h1>
+                <p style={{ color: 'gray', margin: '5px 0 0 0' }}>Jefatura de Datos y Analítica</p>
+              </div>
+              {user && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                        {user.nombre} {user.apellidos}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
+                        {user.email} • {user.rol === 'admin' ? 'Administrador' : 'Usuario'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      {user.rol === 'admin' && (
+                        <button
+                          onClick={() => window.location.href = '/admin'}
+                          style={{
+                            backgroundColor: '#e74c3c',
+                            color: 'white',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          👑 Admin Panel
+                        </button>
+                      )}
+                      <button
+                        onClick={logout}
+                        style={{
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          padding: '8px 16px',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cerrar Sesión
+                      </button>
+                    </div>
+                  </div>
+              )}
+            </div>
+            
+            {currentView === 'viewer' && selectedReport ? (
+              <div style={{ padding: '20px' }}>
+                <button 
+                  onClick={handleBack}
+                  style={{
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    padding: '10px 20px',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    marginBottom: '20px'
+                  }}
+                >
+                  ← Volver a la lista
+                </button>
+                <ReportViewer report={selectedReport} onBack={handleBack} />
+              </div>
+            ) : (
+              <div style={{ padding: '20px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <h2 style={{ color: 'black', margin: 0 }}>Lista de Reportes</h2>
+                  <div style={{
+                    backgroundColor: '#e8f4f8',
+                    border: '2px solid #007bff',
+                    padding: '8px 12px',
+                    borderRadius: '5px'
+                  }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#333' }}>
+                      Última actualización: {new Date().toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+                <ReportList 
+                  key="report-list-component"
+                  onReportSelect={handleReportSelect} 
+                />
+              </div>
+            )}
           </div>
-          <ReportList 
-            key="report-list-component"
-            onReportSelect={handleReportSelect} 
-          />
-        </div>
-      )}
-    </div>
+        </ProtectedRoute>
+      } />
+    </Routes>
   );
 }
 
