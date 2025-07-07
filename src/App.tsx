@@ -6,6 +6,8 @@ import ReportViewer from './components/ReportViewer';
 interface Report {
   id: number;
   nombre: string;
+  Descripcion?: string;
+  imagen_url?: string;
 }
 
 // Definir estados de la aplicación

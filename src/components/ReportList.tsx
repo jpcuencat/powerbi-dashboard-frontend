@@ -5,6 +5,8 @@ import { reportService } from '../services/api';
 interface Report {
   id: number;
   nombre: string;
+  Descripcion?: string;
+  imagen_url?: string;
 }
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
@@ -132,7 +134,10 @@ const ReportList: React.FC<ReportListProps> = ({ onReportSelect }) => {
                 padding: '20px',
                 cursor: 'pointer',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%'
               }}
               onClick={() => {
                 console.log('Report clicked:', report);
@@ -147,34 +152,95 @@ const ReportList: React.FC<ReportListProps> = ({ onReportSelect }) => {
                 e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
               }}
             >
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: '#333',
-                marginBottom: '10px'
-              }}>
-                {report.nombre}
-              </h3>
-              <p style={{
-                fontSize: '14px',
-                color: '#666',
-                marginBottom: '15px'
-              }}>
-                ID: {report.id}
-              </p>
-              <button style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}>
-                Ver Reporte
-              </button>
+              {/* Imagen del reporte */}
+              {report.imagen_url && (
+                <div style={{
+                  width: '100%',
+                  height: '200px',
+                  marginBottom: '15px',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  backgroundColor: '#f8f9fa'
+                }}>
+                  <img
+                    src={report.imagen_url}
+                    alt={`Imagen de ${report.nombre}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                    onError={(e) => {
+                      // Si la imagen no carga, mostrar un placeholder
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling.style.display = 'flex';
+                    }}
+                  />
+                  {/* Placeholder en caso de error */}
+                  <div style={{
+                    display: 'none',
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: '#e9ecef',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#6c757d',
+                    fontSize: '14px'
+                  }}>
+                    📊 Imagen no disponible
+                  </div>
+                </div>
+              )}
+              
+              {/* Contenido del reporte */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: '#333',
+                  marginBottom: '10px',
+                  lineHeight: '1.4'
+                }}>
+                  {report.nombre}
+                </h3>
+                
+                {/* Descripción */}
+                {report.Descripcion && (
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#555',
+                    marginBottom: '10px',
+                    lineHeight: '1.5',
+                    flex: 1
+                  }}>
+                    {report.Descripcion}
+                  </p>
+                )}
+                
+                <p style={{
+                  fontSize: '12px',
+                  color: '#666',
+                  marginBottom: '15px',
+                  fontStyle: 'italic'
+                }}>
+                  ID: {report.id}
+                </p>
+                
+                <button style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  marginTop: 'auto'
+                }}>
+                  Ver Reporte
+                </button>
+              </div>
             </div>
           );
         })}
